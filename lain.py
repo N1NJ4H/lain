@@ -28,11 +28,13 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN") 
 
-# 必ず作成するチャンネル
+# 以下の値はKEYはカテゴリに対応し、値はチャンネルに対応する
+# カテゴリは大文字で記載し、チャンネル名は小文字で記載する必要がある
 need_channels = {
-    'Lain': ['Lain', 'Twitter', 'Facebook'], #LainカテゴリにLainチャンネルは必須
-    'Feed': []
+    'LAIN': ['lain'], #LainカテゴリにLainチャンネルは必須
+    'FEED': [],
 }
+
 # botインスタンスの作成
 bot = commands.Bot(command_prefix='!ain ', help_command=None)
 
@@ -59,6 +61,18 @@ def get_all_text_channels(guild):
             current_all_text_channels[channel.category.name].append(channel.name)
     return current_all_text_channels
 
+def category_name2category_id(guild, category_name):
+    # カテゴリ名からカテゴリIDを返す
+    for category in guild.categories:
+        if category_name == category.name:
+            return category.id
+    return False
+
+def get_lain_channel(guild):
+    for channel in guild.text_channels:
+        if channel.category.name == 'LAIN' and channel.name == 'lain':
+            return channel
+
 #------------------#
 # BOT EVENT METHOD #
 #------------------#
@@ -73,14 +87,20 @@ async def on_ready():
         # 参加しているギルド全てにおいて必要なテキストチャンネルを作成する
         # {'テキストチャンネル': ['intro', 'freedom', 'gamers', 'feeds', 'learning-python', 'windows']}
         current_all_text_channels = get_all_text_channels(guild)
-        print(current_all_text_channels)
-
-
-
-
-
-    
-    
+        # 参加しているギルド全てにおいて必要なチャンネルを作成する
+        for need_category in need_channels.keys():
+            if not need_category in current_all_text_channels.keys():
+                current_all_text_channels[need_category] = []
+            set_need = set(need_channels[need_category])
+            set_current = set(current_all_text_channels[need_category])
+            make_channel_list = set_need - set_current
+            for make_channel in make_channel_list:
+                category_id = category_name2category_id(guild, need_category)
+                category = guild.get_channel(category_id)
+                await category.create_text_channel(make_channel)
+        # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
+        lain_channel = get_lain_channel(guild)
+        await lain_channel.send("Hello World")
 
 # botの起動
 bot.run(DISCORD_BOT_TOKEN)
