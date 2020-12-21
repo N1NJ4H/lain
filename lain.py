@@ -80,90 +80,77 @@ def sqlite3_maintenance():
     # 未実装
     conn.close()
 
-#--------------------------#
-# Discord related function #
-#--------------------------#
-def make_categories_list(guild):
-    # 現在ギルドに存在するカテゴリと必要カテゴリを比較して、
-    # 作成すべきカテゴリのリストを返す
-    current_all_categories = []
-    make_categories = []
-    for category in guild.categories:
-        current_all_categories.append(category.name)
-    for need_category in need_channels.keys():
-        if not need_category in current_all_categories:
-            make_categories.append(need_category)
-    return make_categories
+class Lain(commands.Bot):
 
-def get_all_text_channels(guild):
-    # 以下のような形式で現在存在する全てのテキストチャンネルを返す
-    # {'テキストチャンネル': ['intro', 'freedom', 'gamers', 'feeds', 'learning-python', 'windows']}
-    current_all_text_channels = {}
-    for channel in guild.text_channels:
-        if not channel.category.name in current_all_text_channels.keys():
-            current_all_text_channels[channel.category.name] = [channel.name]
-        else:
-            current_all_text_channels[channel.category.name].append(channel.name)
-    return current_all_text_channels
-
-def category_name2category_id(guild, category_name):
-    # カテゴリ名からカテゴリIDを返す
-    for category in guild.categories:
-        if category_name == category.name:
-            return category.id
-    return False
-
-def get_lain_channel(guild):
-    for channel in guild.text_channels:
-        if channel.category.name == 'LAIN' and channel.name == 'lain':
-            return channel
-
-async def lain_loggin(channel):
-    now = datetime.datetime.now()
-    await channel.send("[lain@wired]$ log in at {}".format(now.strftime("%Y/%m/%d %H:%M:%S.%f")))
-
-# botインスタンスの作成
-bot = commands.Bot(command_prefix='!ain ', help_command=None)
-# sqllite3メンテナンス
-sqlite3_maintenance()
-
-#--------------------#
-# BOT COMMAND METHOD #
-#--------------------#
-@bot.command()
-async def feed(ctx, channel_name, url):
-    feeds = feedparser.parse(url)
-    feed_title = feeds.feed.title
-    await ctx.send('FEED_TITLE {}'.format(feed_title))
-
-#------------------#
-# BOT EVENT METHOD #
-#------------------#
-@bot.event
-async def on_ready():
-    print('Logged on as {0}!'.format(bot.user))
-
-    for guild in bot.guilds:
-        # 参加しているギルド全てにおいて必要なカテゴリを作成する
-        for c in make_categories_list(guild):
-            await guild.create_category(c, overwrites=None, reason=None)
-        # 参加しているギルド全てにおいて必要なテキストチャンネルを作成する
-        # {'テキストチャンネル': ['intro', 'freedom', 'gamers', 'feeds', 'learning-python', 'windows']}
-        current_all_text_channels = get_all_text_channels(guild)
-        # 参加しているギルド全てにおいて必要なチャンネルを作成する
+    def make_categories_list(self, guild):
+        # 現在ギルドに存在するカテゴリと必要カテゴリを比較して、
+        # 作成すべきカテゴリのリストを返す
+        current_all_categories = []
+        make_categories = []
+        for category in guild.categories:
+            current_all_categories.append(category.name)
         for need_category in need_channels.keys():
-            if not need_category in current_all_text_channels.keys():
-                current_all_text_channels[need_category] = []
-            set_need = set(need_channels[need_category])
-            set_current = set(current_all_text_channels[need_category])
-            make_channel_list = set_need - set_current
-            for make_channel in make_channel_list:
-                category_id = category_name2category_id(guild, need_category)
-                category = guild.get_channel(category_id)
-                await category.create_text_channel(make_channel)
-        # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
-        lain_channel = get_lain_channel(guild)
-        await lain_loggin(lain_channel)
+            if not need_category in current_all_categories:
+                make_categories.append(need_category)
+        return make_categories
 
-# botの起動
-bot.run(DISCORD_BOT_TOKEN)
+    def get_all_text_channels(self, guild):
+        # 以下のような形式で現在存在する全てのテキストチャンネルを返す
+        # {'テキストチャンネル': ['intro', 'freedom', 'gamers', 'feeds', 'learning-python', 'windows']}
+        current_all_text_channels = {}
+        for channel in guild.text_channels:
+            if not channel.category.name in current_all_text_channels.keys():
+                current_all_text_channels[channel.category.name] = [channel.name]
+            else:
+                current_all_text_channels[channel.category.name].append(channel.name)
+        return current_all_text_channels
+
+    def category_name2category_id(self, guild, category_name):
+        # カテゴリ名からカテゴリIDを返す
+        for category in guild.categories:
+            if category_name == category.name:
+                return category.id
+        return False
+
+    def get_lain_channel(self, guild):
+        for channel in guild.text_channels:
+            if channel.category.name == 'LAIN' and channel.name == 'lain':
+                return channel
+
+    async def lain_loggin(self, channel):
+        now = datetime.datetime.now()
+        await channel.send("[lain@wired]$ log in at {}".format(now.strftime("%Y/%m/%d %H:%M:%S.%f")))
+
+    async def on_ready(self):
+       print('Logged on as {0}!'.format(self.user))
+       
+       for guild in self.guilds:
+           # 参加しているギルド全てにおいて必要なカテゴリを作成する
+           for c in self.make_categories_list(guild):
+               await guild.create_category(c, overwrites=None, reason=None)
+           # 参加しているギルド全てにおいて必要なテキストチャンネルを作成する
+           # {'テキストチャンネル': ['intro', 'freedom', 'gamers', 'feeds', 'learning-python', 'windows']}
+           current_all_text_channels = self.get_all_text_channels(guild)
+           # 参加しているギルド全てにおいて必要なチャンネルを作成する
+           for need_category in need_channels.keys():
+               if not need_category in current_all_text_channels.keys():
+                   current_all_text_channels[need_category] = []
+               set_need = set(need_channels[need_category])
+               set_current = set(current_all_text_channels[need_category])
+               make_channel_list = set_need - set_current
+               for make_channel in make_channel_list:
+                   category_id = self.category_name2category_id(guild, need_category)
+                   category = guild.get_channel(category_id)
+                   await category.create_text_channel(make_channel)
+           # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
+           lain_channel = self.get_lain_channel(guild)
+           await self.lain_loggin(lain_channel)
+
+if __name__ == '__main__':
+    # botインスタンスの作成
+    lain = Lain(command_prefix='!ain ', help_command=None)
+    # sqllite3メンテナンス
+    sqlite3_maintenance()
+    # botの起動
+    lain.run(DISCORD_BOT_TOKEN)
+
