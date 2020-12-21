@@ -19,9 +19,11 @@ from discord.ext import tasks
 from discord.ext import commands
 import logging
 
-# feed関連のモジュール
+# cogs
+import traceback
+
+# spllite3
 import sqlite3
-import feedparser
 
 # その他のモジュール
 import datetime
@@ -45,43 +47,29 @@ need_channels = {
     'FEED': [],
 }
 
-#-----------------------#
-# FEED related function #
-#-----------------------#
-
-sql_create_feed_info_tbl = '''
-CREATE TABLE IF NOT EXISTS feed_info (
-	feed_title text PRIMARY KEY,
-	url UNIQUE,
-    channel_id int
-)
-'''
-
-sql_create_feed_entry_tbl = '''
-CREATE TABLE IF NOT EXISTS feed_entry (
-	id text PRIMARY KEY,
-    title text,
-    url text,
-    timestamp timestamp
-)
-'''
-
-def sqlite3_connect():
-    conn = sqlite3.connect("lain.db")
-    return conn
-
-def sqlite3_maintenance():
-    conn = sqlite3_connect()
-    # FEED_INFOテーブルの作成
-    conn.execute(sql_create_feed_info_tbl)
-    # FEED_ENTRYテーブルの作成
-    conn.execute(sql_create_feed_entry_tbl)
-    # 不要なエントリの削除
-    # 未実装
-    conn.close()
+INITIAL_EXTENSIONS = [
+    'cogs.feed'
+]
 
 class Lain(commands.Bot):
 
+    def __init__(self, command_prefix):
+        # スーパークラスのコンストラクタに値を渡して実行。
+        super().__init__(command_prefix)
+        
+        self.sqlite3 = sqlite3.connect("lain.db")
+
+        # INITIAL_COGSに格納されている名前から、コグを読み込む。
+        # エラーが発生した場合は、エラー内容を表示。
+        for cog in INITIAL_EXTENSIONS:
+            try:
+                self.load_extension(cog)
+            except Exception:
+                traceback.print_exc()
+    
+    def __del__(self):
+        self.sqlite3.disconnect()
+    
     def make_categories_list(self, guild):
         # 現在ギルドに存在するカテゴリと必要カテゴリを比較して、
         # 作成すべきカテゴリのリストを返す
@@ -148,9 +136,7 @@ class Lain(commands.Bot):
 
 if __name__ == '__main__':
     # botインスタンスの作成
-    lain = Lain(command_prefix='!ain ', help_command=None)
-    # sqllite3メンテナンス
-    sqlite3_maintenance()
+    lain = Lain(command_prefix='!ain ')
     # botの起動
     lain.run(DISCORD_BOT_TOKEN)
 
