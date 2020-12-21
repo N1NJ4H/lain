@@ -16,12 +16,18 @@ import discord
 from discord.ext import tasks
 from discord.ext import commands
 import logging
+
+# その他のモジュール
+import datetime
+
 # logger設定
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='lain.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+
 
 # .envファイルからDiscord Tokenを読み込む
 dotenv_path = join(dirname(__file__), '.env')
@@ -73,6 +79,10 @@ def get_lain_channel(guild):
         if channel.category.name == 'LAIN' and channel.name == 'lain':
             return channel
 
+async def lain_loggin(lain_channel):
+    now = datetime.datetime.now()
+    await lain_channel.send("[lain@wired]$ log in at {}".format(now.strftime("%Y/%m/%d %H:%M:%S.%f")))
+
 #------------------#
 # BOT EVENT METHOD #
 #------------------#
@@ -100,7 +110,7 @@ async def on_ready():
                 await category.create_text_channel(make_channel)
         # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
         lain_channel = get_lain_channel(guild)
-        await lain_channel.send("Hello World")
+        await lain_loggin(lain_channel)
 
 # botの起動
 bot.run(DISCORD_BOT_TOKEN)
