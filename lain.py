@@ -1,5 +1,7 @@
 # coding: UTF-8
 # https://discordpy.readthedocs.io/ja/latest/index.html
+# https://qiita.com/sizumita/items/9d44ae7d1ce007391699
+# https://qiita.com/Lazialize/items/81f1430d9cd57fbd82fb 
 # python3 -m pip install -U discord.py[voice]
 # pip install dotenv
 
@@ -17,6 +19,10 @@ from discord.ext import tasks
 from discord.ext import commands
 import logging
 
+# feed関連のモジュール
+import sqlite3
+import feedparser
+
 # その他のモジュール
 import datetime
 
@@ -26,8 +32,6 @@ logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='lain.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
-
 
 # .envファイルからDiscord Tokenを読み込む
 dotenv_path = join(dirname(__file__), '.env')
@@ -41,9 +45,44 @@ need_channels = {
     'FEED': [],
 }
 
-# botインスタンスの作成
-bot = commands.Bot(command_prefix='!ain ', help_command=None)
+#-----------------------#
+# FEED related function #
+#-----------------------#
 
+sql_create_feed_info_tbl = '''
+CREATE TABLE IF NOT EXISTS feed_info (
+	feed_title text PRIMARY KEY,
+	url UNIQUE,
+    channel_id int
+)
+'''
+
+sql_create_feed_entry_tbl = '''
+CREATE TABLE IF NOT EXISTS feed_entry (
+	id text PRIMARY KEY,
+    title text,
+    url text,
+    timestamp timestamp
+)
+'''
+
+def sqlite3_connect():
+    conn = sqlite3.connect("lain.db")
+    return conn
+
+def sqlite3_maintenance():
+    conn = sqlite3_connect()
+    # FEED_INFOテーブルの作成
+    conn.execute(sql_create_feed_info_tbl)
+    # FEED_ENTRYテーブルの作成
+    conn.execute(sql_create_feed_entry_tbl)
+    # 不要なエントリの削除
+    # 未実装
+    conn.close()
+
+#--------------------------#
+# Discord related function #
+#--------------------------#
 def make_categories_list(guild):
     # 現在ギルドに存在するカテゴリと必要カテゴリを比較して、
     # 作成すべきカテゴリのリストを返す
@@ -79,9 +118,23 @@ def get_lain_channel(guild):
         if channel.category.name == 'LAIN' and channel.name == 'lain':
             return channel
 
-async def lain_loggin(lain_channel):
+async def lain_loggin(channel):
     now = datetime.datetime.now()
-    await lain_channel.send("[lain@wired]$ log in at {}".format(now.strftime("%Y/%m/%d %H:%M:%S.%f")))
+    await channel.send("[lain@wired]$ log in at {}".format(now.strftime("%Y/%m/%d %H:%M:%S.%f")))
+
+# botインスタンスの作成
+bot = commands.Bot(command_prefix='!ain ', help_command=None)
+# sqllite3メンテナンス
+sqlite3_maintenance()
+
+#--------------------#
+# BOT COMMAND METHOD #
+#--------------------#
+@bot.command()
+async def feed(ctx, channel_name, url):
+    feeds = feedparser.parse(url)
+    feed_title = feeds.feed.title
+    await ctx.send('FEED_TITLE {}'.format(feed_title))
 
 #------------------#
 # BOT EVENT METHOD #
