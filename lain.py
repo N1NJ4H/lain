@@ -18,6 +18,11 @@ from dotenv import load_dotenv
 import discord
 from discord.ext import tasks
 from discord.ext import commands
+from discord.ext.commands.errors import (
+    BadArgument,
+    TooManyArguments,
+    MissingRequiredArgument
+)
 import logging
 
 # cogs
@@ -134,6 +139,15 @@ class Lain(commands.Bot):
            # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
            lain_channel = self.get_lain_channel(guild)
            await self.lain_loggin(lain_channel)
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, BadArgument):
+            return await ctx.send(error)
+        if isinstance(error, MissingRequiredArgument):
+            return await ctx.send(error)
+        if isinstance(error, TooManyArguments):
+            return await ctx.send(error)
 
 
 if __name__ == '__main__':
