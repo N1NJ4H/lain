@@ -2,6 +2,7 @@
 # https://discordpy.readthedocs.io/ja/latest/index.html
 # https://qiita.com/sizumita/items/9d44ae7d1ce007391699
 # https://qiita.com/Lazialize/items/81f1430d9cd57fbd82fb 
+# https://qiita.com/Shirataki2/items/3b9f9766bc25bb204ed3
 # python3 -m pip install -U discord.py[voice]
 # pip install dotenv
 
@@ -68,7 +69,7 @@ class Lain(commands.Bot):
                 traceback.print_exc()
     
     def __del__(self):
-        self.sqlite3.disconnect()
+        self.sqlite3.close()
     
     def make_categories_list(self, guild):
         # 現在ギルドに存在するカテゴリと必要カテゴリを比較して、
@@ -133,6 +134,7 @@ class Lain(commands.Bot):
            # この時点で絶対に存在するLAINカテゴリのlainチャンネルを取得する
            lain_channel = self.get_lain_channel(guild)
            await self.lain_loggin(lain_channel)
+
 
 if __name__ == '__main__':
     # botインスタンスの作成
