@@ -4,11 +4,13 @@ from discord.ext import commands
 # feed関連のモジュール
 import feedparser
 
+#from prettytable import from_db_cursor
+
 sql_create_feed_info_tbl = '''
 CREATE TABLE IF NOT EXISTS feed_info (
 	feed_url text PRIMARY KEY,
 	feed_title text,
-    channel_id int
+    channel_id text
 )
 '''
 sql_create_feed_entry_tbl = '''
@@ -81,11 +83,39 @@ class Feed(commands.Cog):
 
     @feed.command(ignore_extra=False)
     async def list(self, ctx):
-        await ctx.send('feedを削除します')
+        cur = self.bot.sqlite3.cursor()
+        cur.execute('select FEED_TITLE, FEED_URL, CHANNEL_ID from feed_info')
+        records = cur.fetchall()
+        for row in records:
+            channel = ctx.guild.get_channel(int(row[2]))
+            await ctx.send("{} {} {}".format(row[0], channel.name, row[1]))
 
     @feed.command(ignore_extra=False)
-    async def remove(self, ctx):
-        await ctx.send('feedを削除します')
-
+    async def remove(self, ctx, url):
+        cur = self.bot.sqlite3.cursor()
+        cur.execute('select channel_id from feed_info where feed_url = ?', (url, ))
+        record = cur.fetchall()
+        if not record:
+            # feed_infoテーブルに該当のURLが存在しない。
+            await ctx.send('This URL is not registered')
+            return False
+        else:
+            # feed_infoテーブルに該当のURLが存在する。
+            channel_id = int(record[0][0])
+            channel = ctx.guild.get_channel(channel_id)
+            # 他にこのチャンネルを使っているfeedが存在するかを確認する
+            cur.execute('select * from feed_info where channel_id = ?', (channel_id, ))
+            records = cur.fetchall()
+            if len(records) > 1:
+                # 他にもチャンネルを使用しているfeedが存在する
+                pass
+            else:
+                # 該当チャンネルを使用しているfeedは1つだけなのでチャンネルも削除する
+                await channel.delete()
+                cur.execute('delete from feed_info where feed_url = ?', (url,))
+                self.bot.sqlite3.commit()
+            # 該当のFEED URLのエントリは全て削除する処理を追加する。
+            await ctx.send("This URL's feed remove")
+        
 def setup(bot):
     bot.add_cog(Feed(bot))
