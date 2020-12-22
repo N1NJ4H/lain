@@ -149,7 +149,6 @@ class Lain(commands.Bot):
         if isinstance(error, TooManyArguments):
             return await ctx.send(error)
 
-
 if __name__ == '__main__':
     # botインスタンスの作成
     lain = Lain(command_prefix='!ain ')

@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext import tasks
 
 # feed関連のモジュール
 import feedparser
@@ -116,6 +117,14 @@ class Feed(commands.Cog):
                 self.bot.sqlite3.commit()
             # 該当のFEED URLのエントリは全て削除する処理を追加する。
             await ctx.send("This URL's feed remove")
-        
+
+    @tasks.loop(minutes=1)
+    async def keep_alive(self):
+        print('KEEP_ALIVE')
+    
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.keep_alive.start()
+
 def setup(bot):
     bot.add_cog(Feed(bot))
