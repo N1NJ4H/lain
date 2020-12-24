@@ -60,7 +60,7 @@ class Feed(commands.Cog):
         try:
             feed_title = feeds.feed.title
         except:
-            await ctx.send('Failed URL analyze. Is this URL correct feed url?')
+            await ctx.send('Failed URL analyze. Is this correct feed url?')
             return False
         # feed_infoテーブルに同じURLが追加されている場合は、中止する
         cur = self.bot.sqlite3.cursor()
@@ -121,7 +121,7 @@ class Feed(commands.Cog):
             self.bot.sqlite3.commit()
             await ctx.send("This URL's feed remove")
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=10)
     async def feed_fetch(self):
         p = re.compile(r"<[^>]*?>") # HTMLタグ削除用正規表現
         cur = self.bot.sqlite3.cursor()
@@ -144,10 +144,15 @@ class Feed(commands.Cog):
                     cur.execute(sql, (entry.link, feed_url))
                     self.bot.sqlite3.commit()
                     # discordにエントリ情報を送信
-                    summary = p.sub("", entry.summary)
+                    # summaryが取れるかをテストする。
+                    try:
+                        summary = entry.summary
+                    except:
+                        summary = ''
+                    summary = p.sub("", summary)
                     await channel.send("[TITLE] {}".format(entry.title))
                     await channel.send("[URL] {}".format(entry.link))
-                    await channel.send("```\n{}\n```".format(summary[0:1000]))
+                    await channel.send("```\n{}\n```".format(summary[0:500]))
     
     @commands.Cog.listener()
     async def on_ready(self):
