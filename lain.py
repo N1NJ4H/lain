@@ -54,7 +54,8 @@ need_channels = {
 }
 
 INITIAL_EXTENSIONS = [
-    'cogs.feed'
+    'cogs.feed',
+    'cogs.currencyconverter'
 ]
 
 class Lain(commands.Bot):

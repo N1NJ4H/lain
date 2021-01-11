@@ -139,21 +139,19 @@ class Feed(commands.Cog):
                     # すでに閲覧済みエントリなのでskipする
                     continue
                 else:
-                    # 初めてのエントリなのでデータベースに保存して、
-                    sql = 'insert into feed_entry (entry_url, feed_url) values (?, ?)'
-                    cur.execute(sql, (entry.link, feed_url))
-                    self.bot.sqlite3.commit()
-                    # discordにエントリ情報を送信
-                    # summaryが取れるかをテストする。
                     try:
-                        summary = entry.summary
+                        # 初めてのエントリなのでデータベースに保存して、
+                        sql = 'insert into feed_entry (entry_url, feed_url) values (?, ?)'
+                        cur.execute(sql, (entry.link, feed_url))
+                        self.bot.sqlite3.commit()
+                        # discordにエントリ情報を送信
+                        summary = p.sub("", entry.summary)
+                        await channel.send("[TITLE] {}".format(entry.title))
+                        await channel.send("[URL] {}".format(entry.link))
+                        await channel.send("```\n{}\n```".format(summary[0:1000]))
                     except:
-                        summary = ''
-                    summary = p.sub("", summary)
-                    await channel.send("[TITLE] {}".format(entry.title))
-                    await channel.send("[URL] {}".format(entry.link))
-                    await channel.send("```\n{}\n```".format(summary[0:500]))
-    
+                        continue
+        
     @commands.Cog.listener()
     async def on_ready(self):
         self.feed_fetch.start()
