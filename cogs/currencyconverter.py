@@ -19,10 +19,10 @@ class CurrencyConverter(commands.Cog):
             # BTC 変換
             if c_from_upper == 'BTC':
                 cc = b.convert_btc_to_cur(float(value), c_to_upper)
-                await ctx.send('[{}] -> [{}] = {} -> {}'.format(c_from_upper, c_to_upper, float(value), cc))
+                await ctx.send('{}{} -> {}{}'.format(float(value), c_from_upper, cc, c_to_upper))
             if c_to_upper== 'BTC':
                 cc = b.convert_to_btc(float(value), c_from_upper)
-                await ctx.send('[{}] -> [{}] = {} -> {}'.format(c_from_upper, c_to_upper, float(value), cc))
+                await ctx.send('{}{} -> {}{}'.format(float(value), c_from_upper, cc, c_to_upper))
         else:
             cc = c.convert(c_from_upper, c_to_upper, float(value))
             await ctx.send('[{}] -> [{}] = {} -> {}'.format(c_from_upper, c_to_upper, float(value), cc))
