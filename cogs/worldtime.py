@@ -12,8 +12,11 @@ class WorldTime(commands.Cog):
     @commands.command(ignore_extra=False)
     async def time(self, ctx):
         tokyo = datetime.datetime.now(pytz.timezone('Asia/Tokyo'))
+        newyork = datetime.datetime.now(pytz.timezone('America/New_York'))
         amsterdam = datetime.datetime.now(pytz.timezone('Europe/Amsterdam'))
+
         await ctx.send("[Tokyo] {}".format(tokyo))
+        await ctx.send("[NewYork] {}".format(newyork))
         await ctx.send("[Amsterdam] {}".format(amsterdam))
 
 def setup(bot):
