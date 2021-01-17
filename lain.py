@@ -56,7 +56,8 @@ need_channels = {
 INITIAL_EXTENSIONS = [
     'cogs.feed',
     'cogs.currencyconverter',
-    'cogs.worldtime'
+    'cogs.worldtime',
+    'cogs.noiz'
 ]
 
 class Lain(commands.Bot):
